@@ -9,16 +9,13 @@ import xml.etree.ElementTree as ET
 
 class APIHandler(tornado.web.RequestHandler):
 
-    def run_nosetests(self, directory, module):
-        _, tmpfile = tempfile.mkstemp()
+    def run_nosetests(self, directory, module, tmpfile):
         cmd = ['nosetests', '-w', directory, module, '--with-xunit',
                '--xunit-file', tmpfile]
-        print cmd
-        process = subprocess.Popen(cmd)
-        process.wait()
-        xml_object = ET.parse(tmpfile)
-        os.unlink(tmpfile)
-        return xml_object
+
+        with open(os.devnull, 'w') as devnull:
+            process = subprocess.Popen(cmd, stdout=devnull, stderr=devnull)
+            process.wait()
 
     def process_nose_result(self, xml_object):
         root = xml_object.getroot()
@@ -80,6 +77,10 @@ class APIHandler(tornado.web.RequestHandler):
         path = self.get_argument('path', None)
         module = self.get_argument('module', None)
 
-        xml_object = self.run_nosetests(path, module)
-        status = self.process_nose_result(xml_object)
+        _, tmpfile = tempfile.mkstemp()
+        self.run_nosetests(path, module, tmpfile)
+        with open(tmpfile) as tmpfile_fd:
+            xml_object = ET.parse(tmpfile_fd)
+            status = self.process_nose_result(xml_object)
+        os.unlink(tmpfile)
         self.write(status)

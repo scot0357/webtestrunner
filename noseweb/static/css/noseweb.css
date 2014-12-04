@@ -1,3 +1,11 @@
-.spaced {
-    margin: 0 7px 0 7px;
+.test-info {
+    margin-top: 6px;
+}
+
+.spacer {
+    margin: 0px 4px 0px 4px;
+}
+
+.details {
+    margin-top: 6px;
 }
